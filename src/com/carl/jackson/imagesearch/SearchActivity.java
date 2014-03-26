@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -28,7 +29,12 @@ public class SearchActivity extends Activity {
 	GridView gvResults;
 	Button btnSearch;
 	ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
+	SearchSettings searchSettings = new SearchSettings();
 	ImageResultArrayAdapter imageAdapter;
+
+	public static final int IMAGE_DISPLAY_ACTIVITY = 0;
+	public static final int SETTINGS_ACTIVITY = 1;
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,11 +64,33 @@ public class SearchActivity extends Activity {
 	}
 
 	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == SETTINGS_ACTIVITY && resultCode == Activity.RESULT_OK) {
+			searchSettings = (SearchSettings) data.getSerializableExtra(Settings.KEY_NAME);
+		}
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.search, menu);
 		return true;
 	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle presses on the action bar items
+		switch (item.getItemId()) {
+		case R.id.action_settings:
+			Intent i = new Intent(getApplicationContext(), Settings.class);
+			i.putExtra(Settings.KEY_NAME, searchSettings);
+			startActivityForResult(i, SETTINGS_ACTIVITY);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+
 
 	public void setupViews() {
 		etQuery = (EditText) findViewById(R.id.etQuery);
@@ -79,11 +107,8 @@ public class SearchActivity extends Activity {
 
 	protected void loadImagesForPage(int page) {
 		Log.d("DEBUG", "page=" + page);
-		String query = etQuery.getText().toString();
 		AsyncHttpClient client = new AsyncHttpClient();
-		client.get("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&rsz=8&" +
-				"start=" + 0 + "&q=" + Uri.encode(query),
-				new JsonHttpResponseHandler() {
+		client.get("https://ajax.googleapis.com/ajax/services/search/images?" + getQueryParams(), new JsonHttpResponseHandler() {
 
 			@Override
 			public void onSuccess(JSONObject response) {
@@ -96,7 +121,37 @@ public class SearchActivity extends Activity {
 					e.printStackTrace();
 				}
 			}
-
 		});
+	}
+
+	private String getQueryParams() {
+		String params = "";
+		String value = searchSettings.getColorFilter();
+		if(value != null && value.length() > 0)
+		{
+			params += "&imgcolor=" + Uri.encode(value);
+		}
+		value = searchSettings.getImageSize();
+		if(value != null && value.length() > 0)
+		{
+			params += "&imgsz="+ Uri.encode(value);
+		}
+
+		value = searchSettings.getImageType();
+		if(value != null && value.length() > 0)
+		{
+			params += "&imgtype="+Uri.encode(value);
+		}
+
+		value = searchSettings.getSiteFilter();
+		if(value != null && value.length() > 0)
+		{
+			params += "&as_sitesearch=" + Uri.encode(value);
+		}
+
+		String query = etQuery.getText().toString();
+		params += "&v=1.0&q=" + Uri.encode(query);
+
+		return params;
 	}
 }
