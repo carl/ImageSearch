@@ -108,7 +108,7 @@ public class SearchActivity extends Activity {
 	protected void loadImagesForPage(int page) {
 		Log.d("DEBUG", "page=" + page);
 		AsyncHttpClient client = new AsyncHttpClient();
-		client.get("https://ajax.googleapis.com/ajax/services/search/images?" + getQueryParams(), new JsonHttpResponseHandler() {
+		client.get("https://ajax.googleapis.com/ajax/services/search/images?" + getQueryParams(page), new JsonHttpResponseHandler() {
 
 			@Override
 			public void onSuccess(JSONObject response) {
@@ -124,7 +124,7 @@ public class SearchActivity extends Activity {
 		});
 	}
 
-	private String getQueryParams() {
+	private String getQueryParams(int page) {
 		String params = "";
 		String value = searchSettings.getColorFilter();
 		if(value != null && value.length() > 0)
@@ -150,7 +150,7 @@ public class SearchActivity extends Activity {
 		}
 
 		String query = etQuery.getText().toString();
-		params += "&v=1.0&q=" + Uri.encode(query);
+		params += "&page" + page + "&v=1.0&q=" + Uri.encode(query);
 
 		return params;
 	}
